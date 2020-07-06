@@ -150,7 +150,6 @@ export default class ExplorerForm {
     init() {
         let t = this;
 
-        t.div.append('<h1>Explore</h1>');
         var d = $('<div class="form-group"></div>');
         d.append('<label class="form-control-sm" for="cepth">SPARQL endpoint:</label>');
         var endpoint = $('<input type="text" class="form-control form-control-sm" id="explorer-form-sparqlendpoint" value="http://localhost:8080/fuseki/b2022/query">');
