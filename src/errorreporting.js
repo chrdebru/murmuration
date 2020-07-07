@@ -1,15 +1,19 @@
-//import $ from 'jquery';
+import toastr from 'toastr';
+import 'toastr/toastr.scss';
 
-//import $ from 'jquery';
+toastr.options = {
+    "positionClass": "toast-bottom-left",
+    "preventDuplicates": true,
+    "showDuration": "300",
+    "hideDuration": "1000",
+    "timeOut": 0,
+    "extendedTimeOut": 0,
+    "tapToDismiss": true
+  };
 
-function log(type = 'info', heading = '', message) {
-    // $('#explorer-alert-container').stickyalert({
-    //     barColor: '#222', // alert background color
-    //     barFontColor: '#FFF', // text font color
-    //     barFontSize: '1.1rem', // text font size
-    //     barText: message,
-    // });
-    return 1;
+function log(message) {
+    console.log(message);
+    toastr.error(message);
 };
 
-module.exports = log; 
+export default log;

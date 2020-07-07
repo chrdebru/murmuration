@@ -6,4 +6,4 @@ function isValidHttpUrl(string) {
     return url.protocol === "http:" || url.protocol === "https:";
 };
 
-module.exports = isValidHttpUrl; 
+export default isValidHttpUrl; 

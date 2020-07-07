@@ -63,3 +63,24 @@ text {
     font-family: sans-serif;
     font-size: 14px;
 }
+
+// CSS FIXES FOR TOASTR
+#toast-container .toast {
+  background-color: #030303;
+}
+
+#toast-container .toast-success {
+  background-color: #51a351;
+}
+
+#toast-container .toast-error {
+  background-color: #bd362f;
+}
+
+#toast-container .toast-info {
+  background-color: #2f96b4;
+}
+
+#toast-container .toast-warning {
+  background-color: #f89406;
+}

@@ -11,6 +11,9 @@ module.exports = {
         compress: true,
         port: 5000
     },
+    externals: {
+        jquery: 'jQuery'
+    },
     module: {
         rules: [
             {

@@ -18,7 +18,7 @@ var generateQueries = function (terms, depth = 3, relationsToBeOmitted = []) {
         var begin = `<${pair[0]}>`;
         var end = `<${pair[1]}>`;
         
-        for(i = 1; i < depth + 1; i++) {
+        for(var i = 1; i < depth + 1; i++) {
             // prepare triple patterns
             var start = i - 1;
             var s = start == 0 ? `${begin}` : `?x${start}`;
@@ -78,4 +78,4 @@ var generateQueries = function (terms, depth = 3, relationsToBeOmitted = []) {
     return allarrays;
 };
 
-module.exports = generateQueries;
+export default generateQueries;

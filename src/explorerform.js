@@ -2,13 +2,72 @@ import $ from 'jquery';
 import 'select2';
 require('select2/src/scss/core.scss');
 
-var qg = require('./querygenerator.js');
-
-import { executeQuery } from './querymodule.js';
-import { createnode } from './querymodule.js';
+import qg from './querygenerator.js';
+import log from './errorreporting.js';
 
 function getEndpoint() {
     return $('#explorer-form-sparqlendpoint').val();
+}
+
+var prefixes = {
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#": "rdf",
+    "http://www.opengis.net/ont/geosparql#": "geo",
+    "http://www.w3.org/2000/01/rdf-schema#": "rdfs",
+    "http://purl.org/dc/terms/": "dcterms",
+    "http://erlangen-crm.org/current/": "cidoc",
+    "https://ont.beyond2022.ie/ontology#": "ont",
+    "https://kb.beyond2022.ie/": "kb"
+};
+
+export async function executeQuery(sparqlendpoint, query) {
+    var g = { nodes: [], links: [] };
+    let result = await $.ajax({
+        url: sparqlendpoint,
+        data: { query: query, format: 'json' },
+        success: function (response) {
+            if (response.results.bindings.length > 0) {
+                var predicates = response.head.vars.filter(x => x.includes('predicate')).sort();
+                for (var i in response.results.bindings) {
+                    var binding = response.results.bindings[i];
+
+                    predicates.forEach((predicate) => {
+                        var index = parseInt(predicate.match(/\d+/g));
+
+                        var subject = binding["x" + (index - 1)];
+                        var object = binding["x" + index];
+
+                        // add the nodes (with dupes)
+                        g.nodes.push(processResource(subject));
+                        g.nodes.push(processResource(object));
+
+                        if (predicate.includes('right'))
+                            g.links.push({ source: subject.value, target: object.value, id: binding[predicate].value });
+                        else
+                            g.links.push({ source: object.value, target: subject.value, id: binding[predicate].value });
+                    });
+                }
+            }
+        },
+        error: function (xhr) {
+            console.warn(`Problem with SPARQL endpoint: ${xhr.statusText} (${xhr.status})`);
+        }
+    });
+    return g;
+};
+
+function processResource(resource) {
+    return createnode(resource.value);
+}
+
+export function createnode(uri, type = 0) {
+    var n = { id: uri, x: 0, y: 0, "type": type };
+    var label = uri;
+    var key = Object.keys(prefixes).find(x => uri.includes(x))
+    if (key) {
+        label = label.replace(key, "(" + prefixes[key] + ")");
+    }
+    n["label"] = label;
+    return n;
 }
 
 function executeQueriesAndDisplayResults(terms, preds, depth, canvas) {
@@ -18,12 +77,12 @@ function executeQueriesAndDisplayResults(terms, preds, depth, canvas) {
     var queries = qg(terms, depth, preds);
     for (let query of queries) {
         executeQuery(endpoint, query).then((d3graph) => {
-                if (d3graph.nodes.length > 0 || d3graph.links.length > 0) {
-                    canvas.add(d3graph);
-                }
-            }).catch(e => {
-                console.log(e);
-            });
+            if (d3graph.nodes.length > 0 || d3graph.links.length > 0) {
+                canvas.add(d3graph);
+            }
+        }).catch(e => {
+            log(`Problem with SPARQL endpoint: ${e.statusText} (${e.status})`); 
+        });
     };
 };
 
@@ -42,11 +101,11 @@ function setupLookingForTerms(div) {
                 var query = `
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
                     SELECT DISTINCT ?option ?label WHERE {
-                        ?option ?predicate [] .
+                        ?option ?predicate [].
                         OPTIONAL { ?option rdfs:label ?label }
-                        FILTER (!ISBLANK(?option))
-                        FILTER (REGEX(STR(?option), "${params.term}", "i") || REGEX(?label, "${params.term}", "i")) 
-                    }`;
+                        FILTER(!ISBLANK(?option))
+                        FILTER(REGEX(STR(?option), "${params.term}", "i") || REGEX(?label, "${params.term}", "i")) 
+                    } `;
                 return { query: query, format: 'json' };
             },
             processResults: function (data, params) {
@@ -55,7 +114,7 @@ function setupLookingForTerms(div) {
 
                 for (var i in data.results.bindings) {
                     var binding = data.results.bindings[i];
-                    results.push({ id: binding['option'].value, text: binding['label'] ? `${binding['label'].value} (${binding['option'].value})` : binding['option'].value });
+                    results.push({ id: binding['option'].value, text: binding['label'] ? `${ binding['label'].value } (${ binding['option'].value })` : binding['option'].value });
                 };
 
                 return {
@@ -88,9 +147,9 @@ function setupIgnoringPredicates(div) {
             data: function (params) {
                 var query = `
                     SELECT DISTINCT ?option WHERE {
-                        [] ?option [] .
-                        FILTER (REGEX(STR(?option), "${params.term}", "i")) 
-                    }`;
+                        [] ?option [].
+                        FILTER(REGEX(STR(?option), "${params.term}", "i")) 
+                    } `;
                 return { query: query, format: 'json' };
             },
             processResults: function (data, params) {
@@ -164,7 +223,7 @@ export default class ExplorerForm {
         d.append('<label class="form-control-sm" for="depth">Max concepts between:</label>');
         var select = $('<select class="form-control form-control-sm" id="depth">');
         for (var i = 0; i <= t.maxLevel; i++) {
-            var option = $(`<option ${i == t.maxLevel - 2 ? 'selected' : ''}>${i}</option>`);
+            var option = $(`<option ${ i == t.maxLevel - 2 ? 'selected' : '' }> ${ i }</option> `);
             select.append(option);
         }
         d.append(select);
