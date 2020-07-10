@@ -1,4 +1,4 @@
-function isValidHttpUrl(string) {
+var isValidHttpUrl = function (string) {
     let url;
     try {
         url = new URL(string);

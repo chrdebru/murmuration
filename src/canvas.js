@@ -1,6 +1,7 @@
 var d3 = require("d3");
 const $ = require('jquery');
-var isValidHttpUrl = require('./util.js');
+import isValidHttpUrl from './util.js'
+;
 var nodecolors = d3.scaleOrdinal(d3.schemeCategory10);
 var linkcolors = d3.scaleOrdinal(d3.schemeSpectral[5]);
 
@@ -145,7 +146,6 @@ export default class Canvas {
                 .enter()
                 .append("g")
                 .attr("id", d => d.id || null)
-                .on("click", d => t.handleNodeClicked(d))
                 .on("contextmenu", d => t.remove(d))
                 .call(drag);
         let graphNodesExit =
@@ -275,9 +275,5 @@ export default class Canvas {
     clear() {
         d3.select("svg").remove();
         this.init();
-    }
-
-    handleNodeClicked(d) {
-        // TODO IF USEFUL
     }
 };
