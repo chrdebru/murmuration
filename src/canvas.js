@@ -1,7 +1,8 @@
 var d3 = require("d3");
 const $ = require('jquery');
 var isValidHttpUrl = require('./util.js');
-var color = d3.scaleOrdinal(d3.schemeCategory10);
+var nodecolors = d3.scaleOrdinal(d3.schemeCategory10);
+var linkcolors = d3.scaleOrdinal(d3.schemeSpectral[5]);
 
 var showdata = function (term, displaydiv) {
     if(!displaydiv)
@@ -41,39 +42,28 @@ export default class Canvas {
             .attr('height', t.height)
             ;
 
-        // Needs to be second, just after the svg itself.
         let background = t.initBackground(t, svg);
-        // background
-
-        // Holds child components (nodes, links), i.e. all but the background
+        
+        // creating nodes and links groups
         let svgGroup = svg
             .append('svg:g')
             .attr("id", "svgGroup");
         t.svgGroup = svgGroup;
 
-        let graphLinksGroup =
-            svgGroup
-                .append("g")
-            //.attr("class", "links")
-            ;
+        let graphLinksGroup = svgGroup.append("g");
         t.graphLinksGroup = graphLinksGroup;
 
-        let graphNodesGroup =
-            svgGroup
-                .append("g")
-            //.attr("class", "nodes")
-            ;
+        let graphNodesGroup = svgGroup.append("g");
         t.graphNodesGroup = graphNodesGroup;
 
-        let zoom =
-            d3.zoom()
-                .on("zoom", () => t.handleZoom(svgGroup));
+        // create zoom function and attach it to the background
+        let zoom = d3.zoom().on("zoom", () => t.handleZoom(svgGroup));
         background.call(zoom);
 
         // build the arrow.
         svg.append("svg:defs").selectAll("marker")
-            .data(["end"])      // Different link/path types can be defined here
-            .enter().append("svg:marker")    // This section adds in the arrows
+            .data(["end"]) 
+            .enter().append("svg:marker") 
             .attr("id", String)
             .attr("viewBox", "0 -5 10 10")
             .attr("refX", 15)
@@ -95,7 +85,7 @@ export default class Canvas {
         let result = svg
             .append("rect")
             .attr("id", "backgroundId")
-            .attr("fill", "#F2F7F0")
+            .attr("fill", "#ffffff")
             .attr("class", "view")
             .attr("x", 0.5)
             .attr("y", 0.5)
@@ -132,10 +122,7 @@ export default class Canvas {
     }
 
     handleZoom(svgGroup) {
-        svgGroup
-            .attr("transform",
-                `translate(${d3.event.transform.x}, ${d3.event.transform.y})` + " " +
-                `scale(${d3.event.transform.k})`);
+        svgGroup.attr("transform", `translate(${d3.event.transform.x}, ${d3.event.transform.y}) scale(${d3.event.transform.k})`);
     }
 
     update(t, simulation, graphNodesGroup, graphLinksGroup) {
@@ -158,27 +145,23 @@ export default class Canvas {
                 .enter()
                 .append("g")
                 .attr("id", d => d.id || null)
-                // .on("mouseover", d => console.log(`d.id: ${d.id}`))
                 .on("click", d => t.handleNodeClicked(d))
                 .on("contextmenu", d => t.remove(d))
                 .call(drag);
         let graphNodesExit =
             graphNodesData
                 .exit()
-                // .call((s) => console.log(`selection exiting. s: ${JSON.stringify(s)}`))
                 .remove();
 
         let graphNodeCircles =
             graphNodesEnter
                 .append("circle")
                 .classed('node', true)
-                .attr("fill", d => color(d.type))
+                .attr("fill", d => nodecolors(d.type))
                 .attr("r", d => d.type === 'start' ? 10 : 5);
 
         let graphNodeLabels =
             graphNodesEnter
-                //.append('a')
-                //.attr("xlink:href", function(d){return d.id;})
                 .append("text")
                 .attr("id", d => "label_" + d.id)
                 .attr('x', 6)
@@ -201,6 +184,7 @@ export default class Canvas {
                 .enter()
                 .append("path")
                 .attr("class", "link")
+                .attr("stroke", d => linkcolors(d.id))
                 .attr("marker-end", "url(#end)");
 
         let graphLinksExit =
