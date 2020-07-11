@@ -1,4 +1,4 @@
-import $, { data } from 'jquery';
+import $ from 'jquery';
 
 require('webpack-jquery-ui');
 require('webpack-jquery-ui/css');
@@ -12,19 +12,11 @@ import 'datatables.net-dt/css/jquery.dataTables.css';
 import qg from './querygenerator.js';
 import log from './errorreporting.js';
 
+import { startterms, prefixes, predicatesToIgnore } from './config.js';
+
 function getEndpoint() {
     return $('#explorer-form-sparqlendpoint').val();
 }
-
-var prefixes = {
-    "http://www.w3.org/1999/02/22-rdf-syntax-ns#": "rdf",
-    "http://www.opengis.net/ont/geosparql#": "geo",
-    "http://www.w3.org/2000/01/rdf-schema#": "rdfs",
-    "http://purl.org/dc/terms/": "dcterms",
-    "http://erlangen-crm.org/current/": "cidoc",
-    "https://ont.beyond2022.ie/ontology#": "ont",
-    "https://kb.beyond2022.ie/": "kb"
-};
 
 export async function executeQuery(sparqlendpoint, query) {
     var g = { nodes: [], links: [] };
@@ -180,10 +172,10 @@ function setupLookingForTerms(div) {
         }
     });
 
-    var option1 = new Option('https://kb.beyond2022.ie/person/Carlton_John_0000_a', 'https://kb.beyond2022.ie/person/Carlton_John_0000_a', true, true);
-    var option2 = new Option('https://kb.beyond2022.ie/person/Balscot_Alexander_C15_a', 'https://kb.beyond2022.ie/person/Balscot_Alexander_C15_a', true, true);
-    $('.explorer-form-terms').append(option1).trigger('change');
-    $('.explorer-form-terms').append(option2).trigger('change');
+    startterms.forEach( x => {
+        let option = new Option(x, x, true, true);
+        $('.explorer-form-terms').append(option).trigger('change');
+    });
 };
 
 function setupIgnoringPredicates(div) {
@@ -223,10 +215,10 @@ function setupIgnoringPredicates(div) {
         }
     });
 
-    var option1 = new Option('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', true, true);
-    var option2 = new Option('http://erlangen-crm.org/current/P2_has_type', 'http://erlangen-crm.org/current/P2_has_type', true, true);
-    $('.explorer-form-predicates').append(option1).trigger('change');
-    $('.explorer-form-predicates').append(option2).trigger('change');
+    predicatesToIgnore.forEach(x => {
+        var option = new Option(x, x, true, true);
+        $('.explorer-form-predicates').append(option).trigger('change');
+    });
 };
 
 function setUpToggleTabs(div) {
