@@ -90,11 +90,26 @@ function executeQueriesAndDisplayResults(terms, preds, depth, canvas, datatable)
     };
 };
 
+var predicatedictionary = {};
 function updateTable(datatable, canvas) {
     datatable.clear();
-    var rows = canvas.getPredicatesAndColors();
+    let rows = canvas.getPredicatesAndColors();
     datatable.rows.add(rows.map(r => ['', r[0], r[1]]));
     datatable.draw();
+
+    // make sure dictionary is empty.
+    predicatedictionary = {};
+
+    $(document).ready(function () {
+        $('.explorer-form-predicate-visibility').off().change(function () {
+            if(this.checked) {
+                canvas.add({ nodes: [], links: predicatedictionary[this.value] });
+            } else {
+                let removedlinks = canvas.removePredicate(this.value);
+                predicatedictionary[this.value] = removedlinks;
+            }
+        });
+    });
 }
 
 function setupLookingForTerms(div) {
@@ -204,7 +219,7 @@ export default class ExplorerForm {
             var terms = t.div.find("select[name='term']").map(function () { return $(this).val(); }).toArray();
             var preds = t.div.find("select[name='predicate']").map(function () { return $(this).val(); }).toArray();
             var depth = parseInt(t.div.find("#depth").val());
-            
+
             var datatable = $('#explorer-form-table').DataTable();
             executeQueriesAndDisplayResults(terms, preds, depth, canvas, datatable);
         });
@@ -216,6 +231,7 @@ export default class ExplorerForm {
                 return;
             }
             canvas.clear();
+            updateTable($('#explorer-form-table').DataTable(), canvas);
         });
     };
 
@@ -256,22 +272,24 @@ export default class ExplorerForm {
         t.div.append(d);
 
         // Adding the list of predicates in a table
-        d = $('<table id="explorer-form-table" style="width:100%"><thead><tr><th>Actions</th><th>Property</th></tr></thead><tbody></tbody></table>');
+        d = $('<table id="explorer-form-table" style="width:100%"><thead><tr><th>Visible</th><th>Property</th></tr></thead><tbody></tbody></table>');
         t.div.append(d);
 
         $('#explorer-form-table').DataTable({
             "paging": true,
             "ordering": false,
             "info": false,
-            "fnRowCallback": function(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
+            "fnRowCallback": function (nRow, aData, iDisplayIndex, iDisplayIndexFull) {
                 $('td', nRow).css('background-color', aData[2]);
             },
             "columnDefs": [
                 {
-                    "targets": [2],
-                    "visible": false,
-                    "searchable": false
+                    "targets": 0,
+                    "render": function (data, type, row) {
+                        return `<input class="explorer-form-predicate-visibility" type="checkbox" checked value="${row[1]}" />`;
+                    },
                 },
+                { "targets": 2, "visible": false, "searchable": false },
             ],
         });
     }

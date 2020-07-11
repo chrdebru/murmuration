@@ -277,6 +277,22 @@ export default class Canvas {
         this.init();
     }
 
+    removePredicate(predicateURI) {
+        let t = this;
+        let currentLinks = t.graphData.links;
+        let toRemoveLinks = currentLinks.filter(l => {
+            return l.id === predicateURI;
+        });
+        toRemoveLinks.forEach(l => {
+            let lIndex = currentLinks.indexOf(l);
+            currentLinks.splice(lIndex, 1);
+        })
+        t.update(t, t.simulation, t.graphNodesGroup, t.graphLinksGroup)
+        t.simulation.restart();
+        t.simulation.alpha(1);
+        return toRemoveLinks;
+    }
+
     getPredicatesAndColors() {
         var preds = [...new Set(this.graphData.links.map(x => x.id))];
         return preds.map(p => [ p, linkcolors(p) ]);
