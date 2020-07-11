@@ -1,6 +1,9 @@
-import $ from 'jquery';
+import $, { data } from 'jquery';
 import 'select2';
 require('select2/src/scss/core.scss');
+
+import 'datatables.net';
+import 'datatables.net-dt/css/jquery.dataTables.css';
 
 import qg from './querygenerator.js';
 import log from './errorreporting.js';
@@ -70,7 +73,7 @@ export function createnode(uri, type = 0) {
     return n;
 }
 
-function executeQueriesAndDisplayResults(terms, preds, depth, canvas) {
+function executeQueriesAndDisplayResults(terms, preds, depth, canvas, datatable) {
     var termnodes = terms.map(t => createnode(t, 'start'));
     canvas.add({ nodes: termnodes, links: [] });
     var endpoint = getEndpoint();
@@ -79,12 +82,20 @@ function executeQueriesAndDisplayResults(terms, preds, depth, canvas) {
         executeQuery(endpoint, query).then((d3graph) => {
             if (d3graph.nodes.length > 0 || d3graph.links.length > 0) {
                 canvas.add(d3graph);
+                updateTable(datatable, canvas);
             }
         }).catch(e => {
-            log(`Problem with SPARQL endpoint: ${e.statusText} (${e.status})`); 
+            log(`Problem with SPARQL endpoint: ${e.statusText} (${e.status})`);
         });
     };
 };
+
+function updateTable(datatable, canvas) {
+    datatable.clear();
+    var rows = canvas.getPredicatesAndColors();
+    datatable.rows.add(rows.map(r => ['', r[0], r[1]]));
+    datatable.draw();
+}
 
 function setupLookingForTerms(div) {
     // Setup looking for terms
@@ -114,7 +125,7 @@ function setupLookingForTerms(div) {
 
                 for (var i in data.results.bindings) {
                     var binding = data.results.bindings[i];
-                    results.push({ id: binding['option'].value, text: binding['label'] ? `${ binding['label'].value } (${ binding['option'].value })` : binding['option'].value });
+                    results.push({ id: binding['option'].value, text: binding['label'] ? `${binding['label'].value} (${binding['option'].value})` : binding['option'].value });
                 };
 
                 return {
@@ -193,7 +204,9 @@ export default class ExplorerForm {
             var terms = t.div.find("select[name='term']").map(function () { return $(this).val(); }).toArray();
             var preds = t.div.find("select[name='predicate']").map(function () { return $(this).val(); }).toArray();
             var depth = parseInt(t.div.find("#depth").val());
-            executeQueriesAndDisplayResults(terms, preds, depth, canvas);
+            
+            var datatable = $('#explorer-form-table').DataTable();
+            executeQueriesAndDisplayResults(terms, preds, depth, canvas, datatable);
         });
 
         t.clearbutton = $('<button id="explore-button" type="submit" class="btn btn-warning">Clear canvas</button>');
@@ -223,7 +236,7 @@ export default class ExplorerForm {
         d.append('<label class="form-control-sm" for="depth">Max concepts between:</label>');
         var select = $('<select class="form-control form-control-sm" id="depth">');
         for (var i = 0; i <= t.maxLevel; i++) {
-            var option = $(`<option ${ i == t.maxLevel - 2 ? 'selected' : '' }> ${ i }</option> `);
+            var option = $(`<option ${i == t.maxLevel - 2 ? 'selected' : ''}> ${i}</option> `);
             select.append(option);
         }
         d.append(select);
@@ -241,5 +254,25 @@ export default class ExplorerForm {
         d = $('<div class="form-group">');
         d.append(t.clearbutton);
         t.div.append(d);
+
+        // Adding the list of predicates in a table
+        d = $('<table id="explorer-form-table" style="width:100%"><thead><tr><th>Actions</th><th>Property</th></tr></thead><tbody></tbody></table>');
+        t.div.append(d);
+
+        $('#explorer-form-table').DataTable({
+            "paging": true,
+            "ordering": false,
+            "info": false,
+            "fnRowCallback": function(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
+                $('td', nRow).css('background-color', aData[2]);
+            },
+            "columnDefs": [
+                {
+                    "targets": [2],
+                    "visible": false,
+                    "searchable": false
+                },
+            ],
+        });
     }
 }

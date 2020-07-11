@@ -276,4 +276,9 @@ export default class Canvas {
         d3.select("svg").remove();
         this.init();
     }
+
+    getPredicatesAndColors() {
+        var preds = [...new Set(this.graphData.links.map(x => x.id))];
+        return preds.map(p => [ p, linkcolors(p) ]);
+    }
 };
