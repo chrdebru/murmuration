@@ -146,7 +146,6 @@ export default class Canvas {
                 .enter()
                 .append("g")
                 .attr("id", d => d.id || null)
-                .on("contextmenu", d => t.remove(d))
                 .call(drag);
         let graphNodesExit =
             graphNodesData
@@ -248,19 +247,18 @@ export default class Canvas {
         t.simulation.restart();
     }
 
-    remove(dToRemove) {
-        d3.event.preventDefault();
+    remove(nodeToRemove) {
         let t = this;
 
         let currentNodes = t.graphData.nodes;
         let currentLinks = t.graphData.links;
-        let nIndex = currentNodes.indexOf(dToRemove);
+        let nIndex = currentNodes.indexOf(nodeToRemove);
         if (nIndex > -1) {
             currentNodes.splice(nIndex, 1);
         }
 
         let toRemoveLinks = currentLinks.filter(l => {
-            return l.source.id === dToRemove.id || l.target.id === dToRemove.id;
+            return l.source.id === nodeToRemove.id || l.target.id === nodeToRemove.id;
         });
         toRemoveLinks.forEach(l => {
             let lIndex = currentLinks.indexOf(l);
@@ -270,6 +268,9 @@ export default class Canvas {
         t.update(t, t.simulation, t.graphNodesGroup, t.graphLinksGroup)
         t.simulation.restart();
         t.simulation.alpha(1);
+
+        // return all that has been removed so that we can restore it later
+        return { nodes: [ nodeToRemove ], links: toRemoveLinks };
     }
 
     clear() {
@@ -293,8 +294,14 @@ export default class Canvas {
         return toRemoveLinks;
     }
 
+    removeEntity(entityURI) {
+        let node = this.graphData.nodes.find(e => e.id === entityURI);
+        return this.remove(node);
+    }
+
     getPredicatesAndColors() {
         var preds = [...new Set(this.graphData.links.map(x => x.id))];
         return preds.map(p => [ p, linkcolors(p) ]);
     }
+
 };

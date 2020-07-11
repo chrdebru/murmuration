@@ -1,4 +1,8 @@
 import $, { data } from 'jquery';
+
+require('webpack-jquery-ui');
+require('webpack-jquery-ui/css');
+
 import 'select2';
 require('select2/src/scss/core.scss');
 
@@ -73,7 +77,7 @@ export function createnode(uri, type = 0) {
     return n;
 }
 
-function executeQueriesAndDisplayResults(terms, preds, depth, canvas, datatable) {
+function executeQueriesAndDisplayResults(terms, preds, depth, canvas) {
     var termnodes = terms.map(t => createnode(t, 'start'));
     canvas.add({ nodes: termnodes, links: [] });
     var endpoint = getEndpoint();
@@ -82,7 +86,7 @@ function executeQueriesAndDisplayResults(terms, preds, depth, canvas, datatable)
         executeQuery(endpoint, query).then((d3graph) => {
             if (d3graph.nodes.length > 0 || d3graph.links.length > 0) {
                 canvas.add(d3graph);
-                updateTable(datatable, canvas);
+                updateTable(canvas);
             }
         }).catch(e => {
             log(`Problem with SPARQL endpoint: ${e.statusText} (${e.status})`);
@@ -91,7 +95,11 @@ function executeQueriesAndDisplayResults(terms, preds, depth, canvas, datatable)
 };
 
 var predicatedictionary = {};
-function updateTable(datatable, canvas) {
+var entitydictionary = {};
+function updateTable(canvas) {
+    // first update the predicates table
+    let datatable = $('#explorer-form-table-predicates').DataTable()
+
     datatable.clear();
     let rows = canvas.getPredicatesAndColors();
     datatable.rows.add(rows.map(r => ['', r[0], r[1]]));
@@ -100,16 +108,35 @@ function updateTable(datatable, canvas) {
     // make sure dictionary is empty.
     predicatedictionary = {};
 
-    $(document).ready(function () {
-        $('.explorer-form-predicate-visibility').off().change(function () {
-            if(this.checked) {
-                canvas.add({ nodes: [], links: predicatedictionary[this.value] });
-            } else {
-                let removedlinks = canvas.removePredicate(this.value);
-                predicatedictionary[this.value] = removedlinks;
-            }
-        });
+    $('.explorer-form-predicate-visibility').off().change(function () {
+        if (this.checked) {
+            canvas.add({ nodes: [], links: predicatedictionary[this.value] });
+        } else {
+            let removedlinks = canvas.removePredicate(this.value);
+            predicatedictionary[this.value] = removedlinks;
+        }
     });
+
+    // now update the entities table
+    datatable = $('#explorer-form-table-entities').DataTable()
+
+    datatable.clear();
+    rows = canvas.graphData.nodes;
+    datatable.rows.add(rows.map(r => ['', r["id"]]));
+    datatable.draw();
+
+    // make sure dictionary is empty.
+    entitydictionary = {};
+
+    $('.explorer-form-entity-visibility').off().change(function () {
+        if (this.checked) {
+            canvas.add(entitydictionary[this.value]);
+        } else {
+            let removed = canvas.removeEntity(this.value);
+            entitydictionary[this.value] = removed;
+        }
+    });
+
 }
 
 function setupLookingForTerms(div) {
@@ -202,6 +229,53 @@ function setupIgnoringPredicates(div) {
     $('.explorer-form-predicates').append(option2).trigger('change');
 };
 
+function setUpToggleTabs(div) {
+    let tabs = $('<div id="explorer-form-tabs"><ul><li><a href="#tabs-1">Predicates</a></li><li><a href="#tabs-2">Entities</a></li></ul>');
+    div.append(tabs);
+
+    // Adding the list of predicates in a table
+    let d = $('<div id="tabs-1"><table id="explorer-form-table-predicates"><thead><tr><th>Visible</th><th>Property</th></tr></thead><tbody></tbody></table></div>');
+    tabs.append(d);
+
+    $('#explorer-form-table-predicates').DataTable({
+        "paging": true,
+        "ordering": false,
+        "info": false,
+        "fnRowCallback": function (nRow, aData, iDisplayIndex, iDisplayIndexFull) {
+            $('td', nRow).css('background-color', aData[2]);
+        },
+        "columnDefs": [
+            {
+                "targets": 0,
+                "render": function (data, type, row) {
+                    return `<input class="explorer-form-predicate-visibility" type="checkbox" checked value="${row[1]}" />`;
+                },
+            },
+            { "targets": 2, "visible": false, "searchable": false },
+        ],
+    });
+    
+    // Adding a list of entities in a table
+    d = $('<div id="tabs-2"><table id="explorer-form-table-entities"><thead><tr><th>Visible</th><th>Entity</th></tr></thead><tbody></tbody></table></div>');
+    tabs.append(d);
+
+    $('#explorer-form-table-entities').DataTable({
+        "paging": true,
+        "ordering": false,
+        "info": false,
+        "columnDefs": [
+            {
+                "targets": 0,
+                "render": function (data, type, row) {
+                    return `<input class="explorer-form-entity-visibility" type="checkbox" checked value="${row[1]}" />`;
+                },
+            }
+        ],
+    });
+
+    $("#explorer-form-tabs").tabs();
+};
+
 export default class ExplorerForm {
 
     constructor(div, canvas = undefind, maxLevel = 6) {
@@ -220,8 +294,8 @@ export default class ExplorerForm {
             var preds = t.div.find("select[name='predicate']").map(function () { return $(this).val(); }).toArray();
             var depth = parseInt(t.div.find("#depth").val());
 
-            var datatable = $('#explorer-form-table').DataTable();
-            executeQueriesAndDisplayResults(terms, preds, depth, canvas, datatable);
+            var datatable = $('#explorer-form-table-predicates').DataTable();
+            executeQueriesAndDisplayResults(terms, preds, depth, canvas);
         });
 
         t.clearbutton = $('<button id="explore-button" type="submit" class="btn btn-warning">Clear canvas</button>');
@@ -231,7 +305,7 @@ export default class ExplorerForm {
                 return;
             }
             canvas.clear();
-            updateTable($('#explorer-form-table').DataTable(), canvas);
+            updateTable(canvas);
         });
     };
 
@@ -271,26 +345,7 @@ export default class ExplorerForm {
         d.append(t.clearbutton);
         t.div.append(d);
 
-        // Adding the list of predicates in a table
-        d = $('<table id="explorer-form-table" style="width:100%"><thead><tr><th>Visible</th><th>Property</th></tr></thead><tbody></tbody></table>');
-        t.div.append(d);
-
-        $('#explorer-form-table').DataTable({
-            "paging": true,
-            "ordering": false,
-            "info": false,
-            "fnRowCallback": function (nRow, aData, iDisplayIndex, iDisplayIndexFull) {
-                $('td', nRow).css('background-color', aData[2]);
-            },
-            "columnDefs": [
-                {
-                    "targets": 0,
-                    "render": function (data, type, row) {
-                        return `<input class="explorer-form-predicate-visibility" type="checkbox" checked value="${row[1]}" />`;
-                    },
-                },
-                { "targets": 2, "visible": false, "searchable": false },
-            ],
-        });
+        // Addint the part to hide/show predicates and entities
+        setUpToggleTabs(t.div);
     }
 }
