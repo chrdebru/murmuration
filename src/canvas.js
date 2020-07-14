@@ -1,12 +1,12 @@
 var d3 = require("d3");
 const $ = require('jquery');
 import isValidHttpUrl from './util.js'
-;
+    ;
 var nodecolors = d3.scaleOrdinal(d3.schemeCategory10);
-var linkcolors = d3.scaleOrdinal(d3.schemeSpectral[5]);
+var linkcolors = d3.scaleOrdinal(d3.schemeCategory10);
 
 var showdata = function (term, displaydiv) {
-    if(!displaydiv)
+    if (!displaydiv)
         console.log('No display div provided.');
 
     var iframe = displaydiv.find("iframe");
@@ -44,7 +44,7 @@ export default class Canvas {
             ;
 
         let background = t.initBackground(t, svg);
-        
+
         // creating nodes and links groups
         let svgGroup = svg
             .append('svg:g')
@@ -63,8 +63,8 @@ export default class Canvas {
 
         // build the arrow.
         svg.append("svg:defs").selectAll("marker")
-            .data(["end"]) 
-            .enter().append("svg:marker") 
+            .data(["end"])
+            .enter().append("svg:marker")
             .attr("id", String)
             .attr("viewBox", "0 -5 10 10")
             .attr("refX", 15)
@@ -78,7 +78,6 @@ export default class Canvas {
         let simulation = t.initSimulation();
         t.simulation = simulation;
 
-        // update();
         t.update(t, simulation, graphNodesGroup, graphLinksGroup);
     }
 
@@ -183,8 +182,9 @@ export default class Canvas {
                 .enter()
                 .append("path")
                 .attr("class", "link")
-                .attr("stroke", d => linkcolors(d.id))
                 .attr("marker-end", "url(#end)");
+
+        d3.selectAll("path").attr("stroke", function(d) { return linkcolors(d.id); })
 
         let graphLinksExit =
             graphLinksData
@@ -226,7 +226,6 @@ export default class Canvas {
         let t = this;
 
         if (d3graph.nodes) {
-            //nodesToAdd.forEach(n => t.graphData.nodes.push(n));
             d3graph.nodes.forEach(function (n) {
                 if (!t.graphData.nodes.find(x => x.id == n.id)) {
                     t.graphData.nodes.push(n);
@@ -234,7 +233,6 @@ export default class Canvas {
             });
         }
         if (d3graph.links) {
-            //linksToAdd.forEach(l => t.graphData.links.push(l));
             d3graph.links.forEach(function (n) {
                 if (!t.graphData.links.find(x => x.id == n.id && x.source == n.source && x.target == n.target)) {
                     t.graphData.links.push(n);
@@ -270,7 +268,7 @@ export default class Canvas {
         t.simulation.alpha(1);
 
         // return all that has been removed so that we can restore it later
-        return { nodes: [ nodeToRemove ], links: toRemoveLinks };
+        return { nodes: [nodeToRemove], links: toRemoveLinks };
     }
 
     clear() {
@@ -301,7 +299,7 @@ export default class Canvas {
 
     getPredicatesAndColors() {
         var preds = [...new Set(this.graphData.links.map(x => x.id))];
-        return preds.map(p => [ p, linkcolors(p) ]);
+        return preds.map(p => [p, linkcolors(p)]);
     }
 
 };
