@@ -18,9 +18,9 @@ function getEndpoint() {
     return $('#explorer-form-sparqlendpoint').val();
 }
 
-export async function executeQuery(sparqlendpoint, query) {
+async function executeQuery(sparqlendpoint, query) {
     var g = { nodes: [], links: [] };
-    let result = await $.ajax({
+    await $.ajax({
         url: sparqlendpoint,
         data: { query: query, format: 'json' },
         success: function (response) {
@@ -48,7 +48,7 @@ export async function executeQuery(sparqlendpoint, query) {
             }
         },
         error: function (xhr) {
-            console.warn(`Problem with SPARQL endpoint: ${xhr.statusText} (${xhr.status})`);
+            log(`Problem with SPARQL endpoint: ${xhr.statusText} (${xhr.status})`);
         }
     });
     return g;
@@ -70,20 +70,23 @@ export function createnode(uri, type = 0) {
 }
 
 function executeQueriesAndDisplayResults(terms, preds, depth, canvas) {
-    var termnodes = terms.map(t => createnode(t, 'start'));
+    let termnodes = terms.map(t => createnode(t, 'start'));
     canvas.add({ nodes: termnodes, links: [] });
-    var endpoint = getEndpoint();
-    var queries = qg(terms, depth, preds);
-    for (let query of queries) {
-        executeQuery(endpoint, query).then((d3graph) => {
+    let endpoint = getEndpoint();
+    const promises = qg(terms, depth, preds).map(query => executeQuery(endpoint, query));
+
+    Promise.allSettled(promises).then((values) => {
+        values.forEach(v => {
+            let d3graph = v.value;
             if (d3graph.nodes.length > 0 || d3graph.links.length > 0) {
                 canvas.add(d3graph);
-                updateTable(canvas);
             }
-        }).catch(e => {
-            log(`Problem with SPARQL endpoint: ${e.statusText} (${e.status})`);
         });
-    };
+        updateTable(canvas);
+    }).catch(e => {
+        log(`Problem: ${e.statusText} (${e.status})`);
+    })
+    
 };
 
 var predicatedictionary = {};
