@@ -133,7 +133,7 @@ function updateTable(canvas) {
 
 function setupLookingForTerms(div) {
     // Setup looking for terms
-    div.append('<div class="form-group"><label class="form-control-sm" for="depth">Elements to explore:</label><select class="explorer-form-terms form-control form-control-sm col-12" multiple="multiple" name="term"></select></div>');
+    div.append('<div class="form-group"><label class="form-control-sm" for="term">Elements to explore:</label><select class="explorer-form-terms form-control form-control-sm col-12" multiple="multiple" id="term" name="term"></select></div>');
 
     $('.explorer-form-terms').select2({
         tokenSeparators: [','],
@@ -180,7 +180,7 @@ function setupLookingForTerms(div) {
 
 function setupIgnoringPredicates(div) {
     // Setup looking for predicates
-    div.append('<div class="form-group"><label class="form-control-sm" for="depth">Predicates to ignore:</label><select class="explorer-form-predicates form-control form-control-sm col-12" multiple="multiple" name="predicate"></select></div>');
+    div.append('<div class="form-group"><label class="form-control-sm" for="predicate">Predicates to ignore:</label><select class="explorer-form-predicates form-control form-control-sm col-12" multiple="multiple" id="predicate" name="predicate"></select></div>');
 
     $('.explorer-form-predicates').select2({
         tokenSeparators: [','],
@@ -315,7 +315,7 @@ export default class ExplorerForm {
 
         // Adding form elements for going levels deep
         d = $('<div class="form-group"></div>');
-        d.append('<label class="form-control-sm" for="depth">Max concepts between:</label>');
+        d.append('<label class="form-control-sm" for="depth">Maximum number of relations in between:</label>');
         var select = $('<select class="form-control form-control-sm" id="depth">');
         for (var i = 0; i <= t.maxLevel; i++) {
             var option = $(`<option ${i == t.maxLevel - 2 ? 'selected' : ''}> ${i}</option> `);
