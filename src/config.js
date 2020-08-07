@@ -17,3 +17,5 @@ export const predicatesToIgnore = [
     'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
     'http://erlangen-crm.org/current/P2_has_type'
 ];
+
+export const sparqlendpointurl = 'http://localhost:8080/fuseki/b2022/query';

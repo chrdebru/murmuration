@@ -12,7 +12,7 @@ import 'datatables.net-dt/css/jquery.dataTables.css';
 import qg from './querygenerator.js';
 import log from './errorreporting.js';
 
-import { startterms, prefixes, predicatesToIgnore } from './config.js';
+import { startterms, prefixes, predicatesToIgnore, sparqlendpointurl } from './config.js';
 
 function getEndpoint() {
     return $('#explorer-form-sparqlendpoint').val();
@@ -309,7 +309,7 @@ export default class ExplorerForm {
 
         var d = $('<div class="form-group"></div>');
         d.append('<label class="form-control-sm" for="cepth">SPARQL endpoint:</label>');
-        var endpoint = $('<input type="text" class="form-control form-control-sm" id="explorer-form-sparqlendpoint" value="http://localhost:8080/fuseki/b2022/query">');
+        var endpoint = $(`<input type="text" class="form-control form-control-sm" id="explorer-form-sparqlendpoint" value="${sparqlendpointurl}">`);
         d.append(endpoint);
         t.div.append(d);
 
