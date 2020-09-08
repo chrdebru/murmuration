@@ -19,6 +19,7 @@ function getEndpoint() {
 }
 
 async function executeQuery(sparqlendpoint, query) {
+    console.log(query);
     var g = { nodes: [], links: [] };
     await $.ajax({
         url: sparqlendpoint,
@@ -156,6 +157,7 @@ function setupLookingForTerms(div) {
                     } `;
                 return { query: query, format: 'json' };
             },
+            headers: { Accept: "application/json" },
             processResults: function (data, params) {
                 params.page = params.page || 1;
                 var results = [];
@@ -200,6 +202,7 @@ function setupIgnoringPredicates(div) {
                     } `;
                 return { query: query, format: 'json' };
             },
+            headers: { Accept: "application/json" },
             processResults: function (data, params) {
                 params.page = params.page || 1;
                 var results = [];
