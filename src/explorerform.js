@@ -22,6 +22,7 @@ async function executeQuery(sparqlendpoint, query) {
     console.log(query);
     var g = { nodes: [], links: [] };
     await $.ajax({
+        type: "POST",
         url: sparqlendpoint,
         data: { query: query, format: 'json' },
         success: function (response) {
@@ -144,6 +145,7 @@ function setupLookingForTerms(div) {
         tags: "true",
         minimumInputLength: 4,
         ajax: {
+            type: "POST",
             delay: 250,
             url: getEndpoint, // this one needs to be the function
             data: function (params) {
@@ -192,6 +194,7 @@ function setupIgnoringPredicates(div) {
         tags: "true",
         minimumInputLength: 4,
         ajax: {
+            type: "POST",
             delay: 250,
             url: getEndpoint, // the function, not the function call
             data: function (params) {
