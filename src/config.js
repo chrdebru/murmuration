@@ -10,7 +10,7 @@ export const prefixes = {
 
 export const startterms = [
     'https://kb.beyond2022.ie/person/Balscot_Alexander_C15_a',
-    'https://kb.beyond2022.ie/person/Carlton_John_0000_a'
+    'https://kb.beyond2022.ie/person/Carlton_John_C14_a'
 ];
 
 export const predicatesToIgnore = [
@@ -18,4 +18,4 @@ export const predicatesToIgnore = [
     'http://erlangen-crm.org/current/P2_has_type'
 ];
 
-export const sparqlendpointurl = 'http://localhost:8080/fuseki/b2022/query';
+export const sparqlendpointurl = 'https://sparql.beyond2022.ie/b2022/sparql';
