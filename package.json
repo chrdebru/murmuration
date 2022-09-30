@@ -25,7 +25,7 @@
   "dependencies": {
     "awesome-notifications": "^3.1.1",
     "bootstrap": "^4.5.0",
-    "d3": "^5.16.0",
+    "d3": "^7.6.1",
     "datatables.net": "^1.10.22",
     "datatables.net-dt": "^1.10.21",
     "node-forge": "^0.10.0",
